@@ -87,8 +87,11 @@ struct TCPServer {
     }
     int accept() {
         int clientSocket = ::accept(socket, nullptr, nullptr);
-        clients.push_back(clientSocket);
-        return clientSocket;
+		if (clientSocket >= 0) {
+		    clients.push_back(clientSocket);
+		    return clientSocket;
+		}
+		return -1;
     }
     inline ssize_t recv(size_t client, void* buff, size_t n) {
         #ifdef _WIN32
@@ -118,6 +121,19 @@ struct TCPServer {
         close(socket);
         #endif
     }
+
+	void removeClient(size_t index)
+	{
+	    int clientSocket = clients[index];
+	
+		#ifdef _WIN32
+	    closesocket(clientSocket);
+		#else
+	    close(clientSocket);
+		#endif
+	    clients[index] = clients.back();
+	    clients.pop_back();
+	}
 };
 struct TCPClient {
     int socket;
